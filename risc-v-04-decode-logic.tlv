@@ -70,9 +70,9 @@
    // Extract fields.
    $funct7[6:0] = $instr[31:25];
    $funct3[2:0] = $instr[14:12];
-   $rs1[4:0]    = $instr[19:15]; // Source 1 register
-   $rs2[4:0]    = $instr[24:20]; // Source 2 register
-   $rd[4:0]     = $instr[11:7];  // Destination register
+   $rs1[4:0]    = $instr[19:15];
+   $rs2[4:0]    = $instr[24:20];
+   $rd[4:0]     = $instr[11:7];
    $opcode[6:0] = $instr[6:0];
    
    $imm[31:0]   = $is_i_instr ? { {21{$instr[31]}}, $instr[30:20] } :
@@ -119,7 +119,7 @@
    *passed = 1'b0;
    *failed = *cyc_cnt > M4_MAX_CYC;
    
-   m4+rf(32, 32, $reset, $rd_valid, $rd[4:0], $wr_data[31:0], $rs1_valid, $rs1[4:0], $src1_value, $rs2_valid, $rs2[4:0], $src2_value)
+   //m4+rf(32, 32, $reset, $wr_en, $wr_index[4:0], $wr_data[31:0], $rd1_en, $rd1_index[4:0], $rd1_data, $rd2_en, $rd2_index[4:0], $rd2_data)
    //m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
    m4+cpu_viz()
 \SV
