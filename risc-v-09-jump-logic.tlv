@@ -133,7 +133,7 @@
    $srai_rslt[63:0] = $sign_extend_src1 >> $imm[4:0];
 
    // Actual results
-   $alu_result[31:0] =
+   $result[31:0] =
       $is_lui ? {$imm[31:12], 12'b0} : // Load immediate value to upper
       $is_auipc ? $pc + $imm : // Add unsigned to program counter
       $is_jal ? $pc + 32'd4 : // Jump and link
@@ -181,23 +181,16 @@
       $taken_br && $is_jalr ? $src1_value + $imm :
       $taken_br ? $pc + $imm :
       0;
-
-   /*==========
-   Load & Store
-   ==========*/
-   $addr[31:0] = $src1_value + $imm;
-
-   $result[31:0] = $is_load ? $ld_data : $alu_result;
    
-   // `BOGUS_USE($rs1 $rs1_valid $rs2 $rs2_valid $funct3 $funct3_valid $funct7 $funct7_valid $imm $imm_valid $rd $rd_valid $opcode)
+   `BOGUS_USE($rs1 $rs1_valid $rs2 $rs2_valid $funct3 $funct3_valid $funct7 $funct7_valid $imm $imm_valid $rd $rd_valid $opcode)
    // `BOGUS_USE($is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_addi $is_add) 
    
    // Assert these to end simulation (before Makerchip cycle limit).
-   // *passed = 1'b0;
-   // *failed = *cyc_cnt > M4_MAX_CYC;
+   *passed = 1'b0;
+   *failed = *cyc_cnt > M4_MAX_CYC;
    
    m4+rf(32, 32, $reset, $rd_valid, $rd[4:0], $result[31:0], $rs1_valid, $rs1[4:0], $src1_value, $rs2_valid, $rs2[4:0], $src2_value)
-   m4+dmem(32, 32, $reset, $addr[4:0], $is_s_instr, $src2_value[31:0], $is_load, $$ld_data)
+   // m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
    m4+cpu_viz()
 \SV
    endmodule
