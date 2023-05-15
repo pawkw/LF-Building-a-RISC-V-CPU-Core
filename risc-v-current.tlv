@@ -22,7 +22,9 @@
    
    `READONLY_MEM($pc, $$instr[31:0]);
    
-   // Decode instruction type.
+   /*==========
+   Decode instruction type
+   ==========*/
    $is_u_instr = $instr[6:2] ==? 5'b0x101;
    // This is equivalent to $intr[6:2] == 5'b00101 || $instr[6:2] == 5'b01101;
    
@@ -40,7 +42,9 @@
    
    $is_j_instr = $instr[6:2] ==? 5'b11011;
    
-   // Extract fields.
+   /*==========
+   Extract Fields
+   ==========*/
    $funct7[6:0] = $instr[31:25];
    $funct3[2:0] = $instr[14:12];
    $rs1[4:0]    = $instr[19:15]; // Source 1 register
@@ -74,10 +78,12 @@
                    $is_i_instr);
    $imm_valid    = ~$is_r_instr;
    
-   // Decode instructions
+   /*==========
+   Decode instructions
+   ==========*/
    $dec_bits[10:0] = {$instr[30],$funct3,$opcode};
    $is_lui  = $dec_bits ==? 11'bx_xxx_0110111;
-   $is_auipc= $dec_bits ==? 11'bx_xxx_0010111;
+   $is_auipc = $dec_bits ==? 11'bx_xxx_0010111;
    $is_jal  = $dec_bits ==? 11'bx_xxx_1101111;
    $is_jalr = $dec_bits ==? 11'bx_000_1100111;
    $is_beq  = $dec_bits ==? 11'bx_000_1100011;
@@ -88,16 +94,52 @@
    $is_bgeu = $dec_bits ==? 11'bx_111_1100011;
    $is_addi = $dec_bits ==? 11'bx_000_0010011;
    $is_slti = $dec_bits ==? 11'bx_010_0010011;
+   $is_sltiu = $dec_bits ==? 11'bx_011_0010011;
+   $is_xori = $dec_bits ==? 11'bx_100_0010011;
+   $is_ori  = $dec_bits ==? 11'bx_110_0010011;
+   $is_andi = $dec_bits ==? 11'bx_111_0010011;
+   $is_slli = $dec_bits ==? 11'b0_001_0010011;
+   $is_srli = $dec_bits ==? 11'b0_101_0010011;
+   $is_srai = $dec_bits ==? 11'b1_101_0010011;
    $is_add  = $dec_bits ==? 11'b0_000_0110011;
+   $is_sub  = $dec_bits ==? 11'b1_000_0110011;
+   $is_sll  = $dec_bits ==? 11'b0_001_0110011;
+   $is_slt  = $dec_bits ==? 11'b0_010_0110011;
+   $is_sltu = $dec_bits ==? 11'b0_011_0110011;
+   $is_xor  = $dec_bits ==? 11'b0_100_0110011;
+   $is_srl  = $dec_bits ==? 11'b0_101_0110011;
+   $is_sra  = $dec_bits ==? 11'b1_101_0110011;
+   $is_or   = $dec_bits ==? 11'b0_110_0110011;
+   $is_and  = $dec_bits ==? 11'b0_111_0110011;
+   
+   $is_load = $dec_bits ==? 11'bx_xxx_0000011; // All load instructions
+   // Store instructions are covered by $is_s_instr above.
    
    
-   // ALU
+   /*==========
+   ALU
+   ==========*/
+
+   // Common results
+
+   // Set if less than result
+   $sltu_rslt[31:0] = {31'b0, $src1_value < $src2_value};
+   $sltiu_rslt[31:0] = {31'b0, $src1_value < $imm};
+
+   // Arithmatic shift right
+   $sign_extend_src1[63:0] = { {32{$src1_value[31]}}, $src1_value };
+   $sra_rslt[63:0] = $sign_extend_src1 >> $src2_value[4:0];
+   $srai_rslt[63:0] = $sign_extend_src1 >> $imm[4:0];
+
+   // Actual results
    $result[31:0] =
       $is_addi ? $src1_value + $imm :
       $is_add  ? $src1_value + $src2_value :
       32'b0;
    
-   // Branch logic
+   /*==========
+   Branch Logic
+   ==========*/
    $taken_br =
       $is_beq  ? $src1_value == $src2_value :
       $is_bne  ? $src1_value != $src2_value :
