@@ -25,22 +25,23 @@
    /*==========
    Decode instruction type
    ==========*/
-   $is_u_instr = $instr[6:2] ==? 5'b0x101;
+   $instr_spec[4:0] = $instr[6:2];
+   $is_u_instr = $instr_spec ==? 5'b0x_101;
    // This is equivalent to $intr[6:2] == 5'b00101 || $instr[6:2] == 5'b01101;
    
-   $is_i_instr = $instr[6:2] ==? 5'b0000x ||
-                 $instr[6:2] ==? 5'b001x0 ||
-                 $instr[6:2] ==? 5'b11001;
+   $is_i_instr = $instr_spec ==? 5'b00_00x ||
+                 $instr_spec ==? 5'b00_1x0 ||
+                 $instr_spec ==? 5'b11_001;
    
-   $is_r_instr = $instr[6:2] ==? 5'b01011 ||
-                 $instr[6:2] ==? 5'b011x0 ||
-                 $instr[6:2] ==? 5'b10100;
+   $is_r_instr = $instr_spec ==? 5'b01_011 ||
+                 $instr_spec ==? 5'b01_1x0 ||
+                 $instr_spec ==? 5'b10_100;
    
-   $is_s_instr = $instr[6:2] ==? 5'b0100x;
+   $is_s_instr = $instr_spec ==? 5'b01_00x;
    
-   $is_b_instr = $instr[6:2] ==? 5'b11000;
+   $is_b_instr = $instr_spec ==? 5'b11_000;
    
-   $is_j_instr = $instr[6:2] ==? 5'b11011;
+   $is_j_instr = $instr_spec ==? 5'b11_011;
    
    /*==========
    Extract Fields
@@ -160,7 +161,7 @@
       $is_sra ? $sra_rslt[31:0] : // Arithmatic shift right
       $is_or ? $src1_value | $src2_value : // Or
       $is_and ? $src1_value & $src2_value : // And
-      32'b0;
+      0;
    
    /*==========
    Branch Logic
@@ -172,9 +173,14 @@
       $is_bge  ? ($src1_value >= $src2_value) ^ ($src1_value[31] != $src2_value[31]) :
       $is_bltu ? $src1_value < $src2_value :
       $is_bgeu ? $src1_value >= $src2_value :
+      $is_jal  ? 1'b1 : // Branch always taken
+      $is_jalr ? 1'b1 : // Branch always taken
       0;
    
-   $br_tgt_pc[31:0] = $taken_br ? $pc + $imm : 0;
+   $br_tgt_pc[31:0] =
+      $taken_br && $is_jalr ? $src1_value + $imm :
+      $taken_br ? $pc + $imm :
+      0;
    
    `BOGUS_USE($rs1 $rs1_valid $rs2 $rs2_valid $funct3 $funct3_valid $funct7 $funct7_valid $imm $imm_valid $rd $rd_valid $opcode)
    // `BOGUS_USE($is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_addi $is_add) 
@@ -184,7 +190,7 @@
    *failed = *cyc_cnt > M4_MAX_CYC;
    
    m4+rf(32, 32, $reset, $rd_valid, $rd[4:0], $result[31:0], $rs1_valid, $rs1[4:0], $src1_value, $rs2_valid, $rs2[4:0], $src2_value)
-   //m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
+   // m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
    m4+cpu_viz()
 \SV
    endmodule
