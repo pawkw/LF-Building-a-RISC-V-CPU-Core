@@ -133,8 +133,33 @@
 
    // Actual results
    $result[31:0] =
-      $is_addi ? $src1_value + $imm :
-      $is_add  ? $src1_value + $src2_value :
+      $is_lui ? {$imm[31:12], 12'b0} : // Load immediate value to upper
+      $is_auipc ? $pc + $imm : // Add unsigned to program counter
+      $is_jal ? $pc + 32'd4 : // Jump and link
+      $is_jalr ? $pc + 32'd4 : // Jump and link register
+      $is_addi ? $src1_value + $imm : // Add immediate
+      $is_slti ? ( ($src1_value[31] == $imm[31]) ?
+         $sltiu_rslt :
+         {31'b0, $src1_value[31]} ) : // Set if less than immediate
+      $is_sltiu ? $sltiu_rslt :
+      $is_xori ? $src1_value ^ $imm : // Xor with immediate
+      $is_ori ? $src1_value | $imm : // Or with immediate
+      $is_andi ? $src1_value & $imm : // And with immediate
+      $is_slli ? $src1_value << $imm[4:0] : // Shift left by immediate
+      $is_srli ? $src1_value >> $imm[4:0] : // Shift right byy immediate
+      $is_srai ? $srai_rslt[31:0] : // Arimatic shift right
+      $is_add  ? $src1_value + $src2_value : // Add
+      $is_sub ? $src1_value - $src2_value : // Subtract
+      $is_sll ? $src1_value << $src2_value[4:0] : // Shift left
+      $is_slt ? ( ($src1_value[31] == $src2_value[31]) ?
+         $sltu_rslt :
+         {31'b0, $src1_value[31]} ) : // Set if less than
+      $is_sltu ? $sltu_rslt : // Unsigned set if less than
+      $is_xor ? $src1_value ^ $src2_value : // Xor
+      $is_srl ? $src1_value >> $src2_value[4:0] : // Shift right
+      $is_sra ? $sra_rslt[31:0] : // Arithmatic shift right
+      $is_or ? $src1_value | $src2_value : // Or
+      $is_and ? $src1_value & $src2_value : // And
       32'b0;
    
    /*==========
